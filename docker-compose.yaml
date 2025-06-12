@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  # ChromaDB 向量数据库
+  chromadb:
+    #    image: chromadb/chroma:latest
+    image: hub.litsoft.com.cn/tools/chroma:1.0.13.dev78
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./chroma_data:/chroma/chroma
+    environment:
+      - ALLOW_RESET=TRUE
+    networks:
+      - vanna-net
+
+        #  # Ollama 服务（运行千问模型）
+        #  ollama:
+        #    image: ollama/ollama:latest
+        #    ports:
+        #      - "11434:11434"
+        #    volumes:
+        #      - ollama_models:/root/.ollama
+        #    networks:
+        #      - vanna-net
+
+  # Vanna AI 主服务
+  vanna:
+    build: ./vanna
+    ports:
+      - "8084:8084"
+    volumes:
+      - ./vanna_cache:/root/.cache
+    environment:
+      - PYTHONIOENCODING=utf-8 
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
+      - CHROMA_URL=http://chromadb:8000
+      - OLLAMA_URL=https://ollama.litsoft.com.cn
+    depends_on:
+      - chromadb
+    networks:
+      - vanna-net
+
+networks:
+  vanna-net:
+    driver: bridge
+

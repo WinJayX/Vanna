@@ -1,0 +1,63 @@
+import openai
+
+# Monkey patch：强制关闭 enable_thinking
+original_create = openai.ChatCompletion.create
+def patched_create(*args, **kwargs):
+    kwargs["enable_thinking"] = False
+    return original_create(*args, **kwargs)
+openai.ChatCompletion.create = patched_create
+
+
+from vanna.base import VannaBase
+from vanna.chromadb import ChromaDB_VectorStore
+from vanna.qianwen import QianWenAI_Chat
+from vanna.flask import VannaFlaskApp
+# from vanna.flask import Flask
+
+import sys
+import io
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+
+# Vanna类定义 + 启动逻辑 保持不变
+
+
+# ✅ 创建Vanna实例
+class MyVanna(ChromaDB_VectorStore, QianWenAI_Chat):
+    def __init__(self, config=None):
+        ChromaDB_VectorStore.__init__(self, config=config)
+        QianWenAI_Chat.__init__(self, config=config)
+
+# ✅ 配置参数
+config = {
+    "api_key": "sk-74b2aa50e99c43c38d88aace97f7c705",
+    "model": "qwen3-235b-a22b"
+}
+
+# ✅ 实例化Vanna
+vn = MyVanna(config=config)
+
+# ✅ 连接MySQL数据库
+vn.connect_to_mysql(
+    host="10.17.0.21",
+    dbname="lit_db_base",  # 替换为你的数据库名称
+    user="root",  # 替换为你的数据库用户名
+    password="lit-Info-Dev",  # 替换为你的数据库密码
+    port=3306  # 数据库的运行端口，pg默认运行在5432端口
+)
+
+# ✅训练
+vn.train(documentation="请注意，在我们公司一般将1作为是，0作为否。")
+
+# ✅ 启动Vanna的Flask应用
+from vanna.flask import VannaFlaskApp
+flask_app = VannaFlaskApp(
+    vn,
+    debug=False,
+    allow_llm_to_see_data=True,
+    title="数据库问答系统"
+)
+# ).run(host='0.0.0.0', port=8084)
+
+if __name__ == "__main__":
+    flask_app.run(host='0.0.0.0', port=8084, debug=True)
+

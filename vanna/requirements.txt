@@ -1,0 +1,13 @@
+--index-url https://pypi.tuna.tsinghua.edu.cn/simple
+--trusted-host pypi.tuna.tsinghua.edu.cn
+
+vanna
+chromadb
+ollama
+openai
+pandas
+PyMySQL
+numpy
+sqlalchemy
+psycopg2-binary
+
